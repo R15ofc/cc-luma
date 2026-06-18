@@ -36,6 +36,27 @@ local PAGES = {
   },
 }
 
+local function load_rig_devapi(name)
+  if fs.exists("/rig/bootstrap.lua") then
+    local ok, module = pcall(function()
+      return dofile("/rig/bootstrap.lua").require("devapi." .. name)
+    end)
+    if ok and type(module) == "table" then
+      return module
+    end
+  end
+  local path = "/rig/devapi/" .. name .. ".lua"
+  if fs.exists(path) then
+    local ok, module = pcall(dofile, path)
+    if ok and type(module) == "table" then
+      return module
+    end
+  end
+  return nil
+end
+
+local rig_net = load_rig_devapi("net")
+
 local function read_config()
   if not fs.exists(CONFIG_PATH) then
     return {}
@@ -110,6 +131,12 @@ local function open_rednet()
 end
 
 local function request_luma_page(address)
+  if rig_net and rig_net.request then
+    local response = rig_net.request(LUMA_WEB_PROTOCOL, { address = address }, LUMA_WEB_REPLY_PROTOCOL, 1.5)
+    if type(response) == "table" and response.ok and type(response.page) == "table" then
+      return response.page
+    end
+  end
   if not open_rednet() then
     return nil
   end
@@ -221,6 +248,9 @@ local function gateway_url()
   if type(url) == "string" and url ~= "" then
     return url:gsub("/+$", "")
   end
+  if rig_net and rig_net.gateway_url then
+    return rig_net.gateway_url()
+  end
   return nil
 end
 
@@ -250,10 +280,16 @@ local function gateway_get(path, query)
 end
 
 local function gateway_fetch(address)
+  if rig_net and rig_net.fetch and rig_net.gateway_url and rig_net.gateway_url() then
+    return rig_net.fetch(address)
+  end
   return gateway_get("/fetch", "url=" .. url_encode(address))
 end
 
 local function gateway_search(query)
+  if rig_net and rig_net.search and rig_net.gateway_url and rig_net.gateway_url() then
+    return rig_net.search(query)
+  end
   return gateway_get("/search", "q=" .. url_encode(query))
 end
 
@@ -376,6 +412,9 @@ local function configure_gateway(action, value)
     local config = read_config()
     config.gateway_url = value:gsub("/+$", "")
     local ok, err = write_config(config)
+    if ok and rig_net and rig_net.set_gateway then
+      rig_net.set_gateway(config.gateway_url)
+    end
     if ok then
       print("OK Gateway set to " .. config.gateway_url)
     else

@@ -2,6 +2,13 @@
 
 Luma is the browser and in-game internet layer for the RIG platform.
 
+It uses RIG `devapi.net` when present:
+
+- `luma://` pages over rednet;
+- normal HTTP/HTTPS through a local gateway;
+- search through the same gateway;
+- local fallback pages when no server is online.
+
 Repositories:
 
 - RIG core: `R15ofc/cc-rig`
