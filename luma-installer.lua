@@ -3,7 +3,10 @@ local TEMP_DIR = "/luma/.installer"
 
 local FILES = {
   { source = "luma/luma.lua", target = "/luma/luma.lua" },
+  { source = "luma/server.lua", target = "/luma/server.lua" },
   { source = "bin/luma.lua", target = "/bin/luma.lua" },
+  { source = "bin/luma-server.lua", target = "/bin/luma-server.lua" },
+  { source = "startup/luma-server.lua", target = "/startup/luma-server.lua" },
 }
 
 local function parse_args(raw)
@@ -122,4 +125,3 @@ end
 
 print("OK Luma Browser installed")
 print("Run: luma")
-
